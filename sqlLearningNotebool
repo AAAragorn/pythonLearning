@@ -82,3 +82,16 @@
       ON d.dept_no = dt.dept_no
       RIGHT JOIN employees AS e
       ON d.emp_no = e.emp_no
+    # 进行子查询的时候 每个派生表都需要有自己的别名 否则会报错
+        子查询的时候可以搞一些多层的嵌套
+        select f.title,f.description
+        from film as f
+        where f.film_id in (
+                            select fc.film_id
+                            from film_category as fc
+                            where fc.category_id in (
+                                                     select c.category_id
+                                                     from category as c
+                                                     where c.name = 'Action'))
+    # 对于sql函数的联系
+        .concat(列,其他什么也行,还能连接多个)

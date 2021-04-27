@@ -133,5 +133,4 @@ print (gdp_returns.corr())
         # 其他类型图形绘制
             avocados.plot(x = 'nb_sold',y='avg_price',kind = 'scatter',title = 'Number of avocados sold vs. average price')
             kind = line/scatter/bar
-
-
+# .merge
