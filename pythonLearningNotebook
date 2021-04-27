@@ -1,0 +1,137 @@
+Data Manipulation with pandas
+# python 一些基础的语法内容
+    # list compersion 列表推导式
+        is_recession = ['r' if s=='recession' else 'g' for s in gdp_recession['econ_status']]
+        [output_expression() for(set of values to iterate) if(conditional filtering)]
+# pviot 数据透视表
+    # Print the mean weekly_sales by department and type; fill missing values with 0s; sum all rows and cols
+        sales.pivot_table(values="weekly_sales", index="department", columns="type",margins = True,fill_value = 0)
+        values  = 汇总计算的值 index = 行聚合键 columns = 列聚合键 margins = 是否进行汇总 fill_value = 空值填充
+    # working with pivot table 提供一个在数据透视+行多重索引+时间处理的例子
+        Add a year column to temperatures
+        temperatures['year'] = temperatures['date'].dt.year
+
+        # Pivot avg_temp_c by country and city vs year
+        temp_by_country_city_vs_year = temperatures.pivot_table(values = 'avg_temp_c',index = ['country','city'],columns = 'year')
+
+# Slicing and Indexing
+    # Indexing 索引
+    # DataFrame Slicing
+        # 索引切片
+            #通过索引选取特定行
+                 #行索引
+                    使用loc['a','b']可对于行索引进行切片 但是需要注意的是 只会应用于一级索引，二级索引无法切片且不会抛出错误
+                    如想使用内部索引切片 可用的办法是将第一个位置和最后一个位置索引作为元组进行传递
+            # 选取subsetting 依托于索引排序
+                Sort the index before you slice dogs_srt = dogs.set_index(["breed", "color"]).sort_index()
+                类似于按照iloc[]的切片方式
+                #行索引切片
+                    dogs_srt.loc["Chow Chow":"Poodle"] 选取"Chow Chow"行到"Poodle"行
+                #多重行索引切片
+                    dogs_srt.loc[("Labrador", "Brown"):("Schnauzer", "Grey")] 通过传递两个元组
+                    "Labrador"：一级行索引 "Brown" 二级行索引
+                # 列切片
+                    dogs_srt.loc[:, "name":"height_cm"]
+                    , 前为 : 代表选取所有行
+                # 行列切片
+                    dogs_srt.loc[("Labrador", "Brown"):("Schnauzer", "Grey"), "name":"height_cm"]
+                # 将时间作为索引的操作 可用于筛选时间区间内的数据
+                    将时间作为索引
+                    dogs = dogs.set_index("date_of_birth").sort_index()
+                    通过索引对于时间数据进行切片
+                    Get dogs with date_of_birth between 2014-08-25 and 2016-09-16
+                    dogs.loc["2014-08-25":"2016-09-16"]
+                    Get dogs with date_of_birth between 2014-01-01 and 2016-12-31
+                    dogs.loc["2014":"2016"]
+                    # Use Boolean conditions to subset temperatures for rows in 2010 and 2011 传统布尔类型
+                    temperatures_bool = temperatures[(temperatures['date']>='2010-01-01') & (temperatures['date']<='2011-12-31')]
+
+                    # Set date as an index and sort the index 利用时间作为索引且排序之后就可以使用loc进行区间切片
+                    temperatures_ind = temperatures.set_index('date').sort_index()
+
+                    # Use .loc[] to subset temperatures_ind for rows in 2010 and 2011
+                    temperatures_ind.loc['2010':'2011']
+
+                    # Use .loc[] to subset temperatures_ind for rows from Aug 2010 to Feb 2011
+                    temperatures_ind.loc['2010-08':'2011-2']
+                # 通过行列标号进行索引
+                    其实不同太在意区间开闭 因为标号从0开始
+                    # Get 23rd row, 2nd column (index 22, 1)
+                    temperatures.iloc[23:24,1:2]
+
+                    # Use slicing to get the first 5 rows
+                    temperatures.iloc[0:5]
+
+                    # Use slicing to get columns 3 to 4
+                    temperatures.iloc[:,2:4]
+
+                    # Use slicing in both directions at once
+                    temperatures.iloc[:5,2:4]
+                # .query('') 查找匹配的行内容 例如sql的where子句
+                    HINT 需要注意的的是日期格式和string格式的内容一样需要嵌套""
+                # .melt() 融化了
+
+# pandas 函数的使用
+    #.mean() 函数 均值
+        参数 axis 默认沿着行进行计算，axis = 'columns' 沿着列方向进行计算
+        mean_temp_by_city = temp_by_country_city_vs_year.mean(axis = 'columns')
+    #.isna()
+        判断是否为nan 布尔类型
+        isna().any() 可进行统计
+    # fillna() 填充空值
+        fillna(填充值)
+    # dropna() 删除空值
+    # .sort_values 排序
+        DataFrame.sort_values(by=‘##',axis=0,ascending=True, inplace=False, na_position=‘last')
+    #.value_counts() 针对值聚合计数 可对于Series
+        taxi_own_veh['fuel_type'].value_counts()
+    # .groupby
+        #hint
+        counted_df = licenses_owners.groupby('title').agg({'account':'count'})
+        .agg函数做聚合的时候可以传入字典，选择列进行聚合{'account':'count'}
+        # level = 0 的应用 指多级行索引中的第一层
+    #表联结
+        #.merge()
+            # innerjoin 默认
+                It is necessary to understand that inner joins only return the rows with matching values in both tables
+                # Merge the taxi_owners and taxi_veh tables
+                taxi_own_veh = taxi_owners.merge(taxi_veh, on='vid',suffixes = ('_own','_veh'))
+            # 半联结 使用merge里的参数 indicator 为true 将出现'_merge'列来展示联结情况
+                例如 'left_only' 意思为右表的内容没匹配上
+                # Merge employees and top_cust
+                    empl_cust = employees.merge(top_cust, on='srid',how='left', indicator=True)
+                # Select the srid column where _merge is left_only
+                    srid_list = empl_cust.loc[empl_cust['_merge'] == 'left_only', 'srid']
+                 # Get employees not working with top customers
+                    print(employees[employees['srid'].isin(srid_list)])
+            # 时间序列的联结 可以用于分析时间序列数据 使用pd.merge_ordered()
+                gdp_sp500 = pd.merge_ordered(gdp, sp500, left_on='year', right_on='date',
+                             how='left',  fill_method='ffill')
+            # pd.merge_asof() 处理时间序列不同的数据 可以将相近的时间进行匹配
+                direction = 'nearest/forwaerd/backward'
+                forward：右表 on 的键大于等与左边中最接近的
+                nearest 无论大于还是小雨 就是最接近
+                默认为backward
+                # Use merge_asof() to merge jpm and wells
+                    jpm_wells = pd.merge_asof(jpm,wells,on = 'date_time',direction = 'nearest',suffixes=('', '_wells'))
+                    print(jpm_wells.head())
+                    # Use merge_asof() to merge jpm_wells and bac
+                    jpm_wells_bac = pd.merge_asof(jpm_wells,bac,on = 'date_time',suffixes=('_jpm', '_bac'))
+                    # Compute price diff
+                    price_diffs = jpm_wells_bac.diff()
+
+# Subset the gdp and returns columns
+gdp_returns = gdp_sp500.loc[:,['gdp','returns']]
+
+# Print gdp_returns correlation
+print (gdp_returns.corr())
+# Visualizing DataFrames
+    # 简单的图形创建
+        # 直方图
+            avocados[avocados["type"] == "organic"]["avg_price"].hist(alpha=0.5 ,bins =20)
+            alpha = 透明度 bins = 箱体数量
+        # 其他类型图形绘制
+            avocados.plot(x = 'nb_sold',y='avg_price',kind = 'scatter',title = 'Number of avocados sold vs. average price')
+            kind = line/scatter/bar
+
+
