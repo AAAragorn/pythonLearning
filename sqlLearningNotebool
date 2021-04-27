@@ -1,0 +1,84 @@
+# leetcode 笔记
+    # 1.编写一个 SQL 查询，获取 Employee表中第二高的薪水（Salary）。
+    +----+--------+
+    | Id | Salary |
+    +----+--------+
+    | 1  | 100    |
+    | 2  | 200    |
+    | 3  | 300    |
+    +----+--------+
+    例如上述Employee表，SQL查询应该返回200 作为第二高的薪水。如果不存在第二高的薪水，那么查询应返回 null。
+
+    +---------------------+
+    | SecondHighestSalary |
+    +---------------------+
+    | 200                 |
+    +---------------------+
+    SELECT IFNULL((SELECT DISTINCT Employee.Salary FROM Employee ORDER BY Employee.Salary DESC LIMIT 1 OFFSET 1 ),null) AS SecondHighestSalary
+    Hint:
+        # limit offset的应用
+            SQL查询语句中的 limit 与 offset 的区别：
+            limit y 分句表示: 读取 y 条数据
+
+            limit x, y 分句表示: 跳过 x 条数据，读取 y 条数据
+
+            limit y offset x 分句表示: 跳过 x 条数据，读取 y 条数据
+
+            比如分页获取数据：
+
+            第1页： 从第0个开始，获取20条数据
+
+            select * from testtable limit 0, 20;
+            select * from testtable limit 20 offset 0;
+
+            第2页： 从第20个开始，获取20条数据
+
+            select * from testtable limit 20, 20;
+            select * from testtable limit 20 offset 20;
+
+            第3页： 从第40个开始，获取20条数据
+
+            select * from testtable limit 40, 20;
+            select * from testtable limit 20 offset 40;
+        # IFNULL的应用
+            IFNULL() 函数用于判断第一个表达式是否为 NULL，如果为 NULL 则返回第二个参数的值，如果不为 NULL 则返回第一个参数的值。
+            IFNULL(expression, alt_value)
+        # DISTINCT 的使用 选取第二高的成绩有可能存在多个数据重复
+        # DESC 降序排列
+    # INNER JOIN的使用
+        SELECT salaries.*,dept_manager.dept_no
+        FROM salaries INNER JOIN dept_manager
+        ON salaries.emp_no = dept_manager.emp_no
+        ORDER BY salaries.emp_no
+        主表 INNER JOIN 联结的表
+        ON 主键
+    # GROUP BY
+        分组聚合没啥好说的
+        # HAVING 对于聚合结果进行筛选 这条高亮
+    # 题目 查询 薪资排名第二的用户 不使用orderby
+        解题思路：
+        1.使用一个表当作两个表做内联结
+        2.联结匹配的时候，设置条件为 < = 让表A的键能与大于等于自身的键匹配 这一步其实就是做排序
+        3.之后用表A的键位做groupby，这样每个表A的键都可以分组聚合出大于等于自身的
+        4.对于聚合进行COUNT（）亮点是DISTINCT
+        5.去重后的结果就是聚合键的排序，每个聚合内容计数一次，有几个大于等于聚合键就是第几位
+        SELECT e.emp_no,s.salary,e.last_name,e.first_name
+            FROM salaries AS s
+            INNER JOIN employees AS e
+            ON s.emp_no = e.emp_no
+            WHERE s.salary = (
+                SELECT s1.salary
+                FROM salaries AS s1
+                INNER JOIN salaries AS s2
+                ON s1.salary <= s2.salary
+                GROUP BY s1.salary
+                HAVING COUNT(DISTINCT s2.salary) = 2
+        )
+    # 深刻体会到了 为啥有时候用RIGHT JOIN 因为SQL语句的语序 不一定能按照你预想的顺序进行联结
+      这时候就需要使用RIGHT JOIN以保证关系正确
+      SELECT e.last_name,e.first_name,dt.dept_name
+      FROM dept_emp AS d
+      INNER JOIN departments AS dt
+      ON d.dept_no = dt.dept_no
+      RIGHT JOIN employees AS e
+      ON d.emp_no = e.emp_no
