@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # 开发环境应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: python-app-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/appdb
+      - SECRET_KEY=development-secret-key
+      - DEBUG=True
+    depends_on:
+      - db
+    networks:
+      - dev-network
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # 数据库服务
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db-dev
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  postgres-dev-data:
