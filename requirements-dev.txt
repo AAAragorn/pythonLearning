@@ -1,0 +1,14 @@
+# 开发环境额外依赖
+-r requirements.txt
+
+# 开发工具
+ipython==8.20.0
+ipdb==0.13.13
+pre-commit==3.6.0
+
+# 文档生成
+mkdocs==1.5.3
+mkdocs-material==9.5.3
+
+# 性能分析
+py-spy==0.3.14
